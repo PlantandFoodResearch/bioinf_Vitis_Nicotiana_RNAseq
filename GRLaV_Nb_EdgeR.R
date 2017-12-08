@@ -88,6 +88,9 @@ cpmlimit    <- 1
 libexplimit <- 1
 keep <- rowSums(cpm(all_genes)>cpmlimit) >= libexplimit
 
+## Visualize
+hist(log2(rowSums(cpm(all_genes))))
+abline(v=log2(cpmlimit), col="red", lty=2)
 
 ## Sanity check how many are kept
 table(keep)
@@ -110,6 +113,8 @@ for(i in colnames(all_genes)) {
 ## Alternative filter which overrides line:89
 keep <- !apply(GRLaV3_vs_Nb==0, 1, all)
 
+## Sanity check how many are kept
+table(keep)
 
 ## Must use which here
 all_genes_kept <- all_genes[which(keep), keep.lib.sizes=FALSE]
