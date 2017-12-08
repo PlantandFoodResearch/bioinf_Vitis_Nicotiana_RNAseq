@@ -1,4 +1,4 @@
-panel.points <- function(x, y, col=NULL, loess = FALSE,  maTransform = TRUE, ...){
+panel.points <- function(x, y, col=NULL, fitLoess = FALSE,  maTransform = FALSE, ...){
   if(is.null(col)) {
     dcols <- densCols(x,y)
     if(maTransform) {
@@ -13,7 +13,7 @@ panel.points <- function(x, y, col=NULL, loess = FALSE,  maTransform = TRUE, ...
       points(x, y, col=col, ...)
     }
   }
-  if(loess) {
+  if(fitLoess) {
     loessObj <- loess(y~x)
     yhat <- fitted(loessObj)
     o <- order(yhat)
@@ -27,7 +27,7 @@ panel.points <- function(x, y, col=NULL, loess = FALSE,  maTransform = TRUE, ...
 }
 
 
-panel.corr <- function(x,y, maTransform = TRUE, ...){
+panel.corr <- function(x,y, maTransform = FALSE, ...){
   NAs  <- (is.na(x) | is.na(y))
   infs <- (is.infinite(x) | is.infinite(y))
   correlation <- round(cor(x[!(NAs | infs)], y[!(NAs | infs)]), 2)

@@ -1,12 +1,9 @@
 
-## Load edgeR
-if(!require(edgeR)) {
-  source("https://bioconductor.org/biocLite.R")
-  biocLite("edgeR")
-  library(edgeR)
-}
+library(edgeR)
+library(limma)
 
 rm(list=ls())
+
 
 ## Graphics functions for pairs plots
 source("functions.R")
@@ -41,10 +38,10 @@ GRLaV3_vs_Nb[,1] <- NULL
 par(pty="s")
 
 pairs(log2(GRLaV3_vs_Nb), labels=colnames(GRLaV3_vs_Nb), upper.panel=panel.points, lower.panel=panel.corr,
-      pch=16, cex=0.4, loess=FALSE, maTransform=FALSE, asp=1)
+      pch=16, cex=0.4, asp=1)
 
 pairs(log2(GRLaV3_vs_Nb), labels=colnames(GRLaV3_vs_Nb), upper.panel=panel.points, lower.panel=panel.corr,
-      xlim=c(0,20), ylim=c(-8,8), pch=16, cex=0.4, loess=FALSE, asp=1)
+      maTransform=TRUE, xlim=c(0,20), ylim=c(-8,8), pch=16, cex=0.4, asp=1)
 
 
 plotMDS(log2(GRLaV3_vs_Nb+0.5), top=1000)
@@ -70,12 +67,14 @@ for( i in seq(ncol(all_genes))) {
 breaks <- seq(0, ceiling(max(log2(all_genes$counts))))
 tweak  <- 1
 
+## Distribution of counts
 for(i in colnames(all_genes)) {
-  hist(log2(all_genes$counts+tweak)[, i], breaks=breaks, main=i)
+  hist(log2(all_genes$counts+tweak)[, i], breaks=breaks, main=i, xlab="log2(counts)")
 }
 
 # Calculate normalisation factors
-all_genes <- calcNormFactors(all_genes)
+all_genes <- calcNormFactors(all_genes, method="TMM")
+
 # Examine normalisation factors as a sanity check
 all_genes$samples
 # We can see that Benth.Healthy2 had a lot less sequencing.
@@ -86,7 +85,7 @@ all_genes$samples
 # This filters out genes that are less than cpmlimit, and 
 # that are not expressed in libexplimit number of libraries
 cpmlimit    <- 1
-libexplimit <- 3
+libexplimit <- 1
 keep <- rowSums(cpm(all_genes)>cpmlimit) >= libexplimit
 
 
@@ -94,27 +93,49 @@ keep <- rowSums(cpm(all_genes)>cpmlimit) >= libexplimit
 table(keep)
 
 
-all_genes_kept <- all_genes[keep, , keep.lib.sizes=FALSE]
+## Visualize filtering
+pairs(log2(GRLaV3_vs_Nb), labels=colnames(GRLaV3_vs_Nb), upper.panel=panel.points, lower.panel=panel.corr,
+      pch=16, cex=0.1, asp=1, col=c("black","grey")[(keep)+1], main="Filtering effect")
+
+pairs(log2(GRLaV3_vs_Nb), labels=colnames(GRLaV3_vs_Nb), upper.panel=panel.points, lower.panel=panel.corr,
+      maTransform=TRUE, xlim=c(0,20), ylim=c(-8,8), pch=16, cex=0.1, asp=1, col=c("black", "grey")[(keep)+1], main="MAplot Filtering effect")
+
+
+## Distribution of counts after filtering
+for(i in colnames(all_genes)) {
+  hist(log2(all_genes$counts+tweak)[keep , i], breaks=breaks, main=i, xlab="log2(counts)")
+}
+
+
+## Alternative filter which overrides line:89
+keep <- !apply(GRLaV3_vs_Nb==0, 1, all)
+
+
+## Must use which here
+all_genes_kept <- all_genes[which(keep), keep.lib.sizes=FALSE]
+
+## Sanity check
+dim(all_genes)
+dim(all_genes_kept)
+
 # Calculate normalisation factors again
-all_genes_kept <- calcNormFactors(all_genes)
+all_genes_kept <- calcNormFactors(all_genes_kept, method="TMM")
 
-## Sanity check - Benth.Healthy.2 is an order of magnitude smaller!
-calcNormFactors(all_genes)
+## Sanity check
 apply(GRLaV3_vs_Nb,2, sum)
-
-# Need to look at underlying bam mapping scores...
-
-
-# Examine normalisation factors as a sanity check again
+calcNormFactors(all_genes, method="TMM")
 all_genes_kept$samples
+
+## Benth.Healthy.2 is an order of magnitude smaller!
+apply(GRLaV3_vs_Nb,2, sum)[1] / apply(GRLaV3_vs_Nb,2, sum)[2]
+
+# Todo: Need to look at underlying bam mapping scores...
 
 
 # set experiment design
 design <- model.matrix(~replicate_relationship)
 # estimate dispersion
 all_genes_kept <- estimateDisp(all_genes_kept, design)
-
-
 
 
 # Now we test for differential expression using two methods.
@@ -130,14 +151,57 @@ all_genes_kept <- estimateDisp(all_genes_kept, design)
 # Use the glm to obtain DE genes
 fitglm <- glmFit(all_genes_kept, design)
 lrtglm <- glmLRT(fitglm, coef=2)
-topTags(lrtglm, n=10)
+topN   <- topTags(lrtglm, n=nrow(lrtglm))
 
+threshold <- 0.05
+de_genes  <- topN$table[topN$table$FDR<threshold,]
+
+## DE genes
+nrow(de_genes)
+
+## First 10
+head(de_genes, n=10)
+
+## estimate pi0
+pvals <- topN$table$PValue
+
+hist(pvals)
+
+## Investigating abnormal right hand peak in pvalue histogram
+# ind <- which(pvals>=1)
+# rownames(topN$table)[ind]
+# GRLaV3_vs_Nb[rownames(topN$table)[ind],]
+
+pi0_hat <- limma::convest(pvals)
+print(pi0_hat)
 
 # Use the quasi-likelihood model to obtain DE genes.
 # From edgeR manual: 
 #"While the likelihood ratio test is a more obvious choice for inferences with GLMs, the QL
 #F-test is preferred as it reflects the uncertainty in estimating the dispersion for each gene. It
 #provides more robust and reliable error rate control when the number of replicates is small"
-fitqlm <- glmQLFit(all_genes_kept, design)
+fitqlm  <- glmQLFit(all_genes_kept, design)
 qlftest <- glmQLFTest(fitqlm, coef=2)
-topTags(qlftest, n=10)
+topN2   <- topTags(qlftest, n=nrow(lrtglm))
+
+threshold <- 0.05
+de_genes2 <- topN2$table[topN2$table$FDR<threshold,]
+
+## DE genes
+nrow(de_genes2)
+## First 10
+head(de_genes2, n=10)
+
+
+## estimate pi0
+pvals <- topN$table$PValue
+
+hist(pvals)
+
+## Investigating abnormal right hand peak in pvalue histogram
+# ind <- which(pvals>=1)
+# rownames(topN$table)[ind]
+# GRLaV3_vs_Nb[rownames(topN$table)[ind],]
+
+pi0_hat <- limma::convest(pvals)
+print(pi0_hat)
