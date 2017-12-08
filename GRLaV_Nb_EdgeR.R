@@ -153,6 +153,7 @@ fitglm <- glmFit(all_genes_kept, design)
 lrtglm <- glmLRT(fitglm, coef=2)
 topN   <- topTags(lrtglm, n=nrow(lrtglm))
 
+
 threshold <- 0.05
 de_genes  <- topN$table[topN$table$FDR<threshold,]
 
