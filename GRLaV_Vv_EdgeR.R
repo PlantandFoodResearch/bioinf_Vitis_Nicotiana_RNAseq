@@ -30,7 +30,7 @@ sum(keep)
 
 de_genes_kept <- de_genes[keep, , keep.lib.sizes=FALSE]
 # Calculate normalisation factors again
-de_genes_kept <- calcNormFactors(de_genes)
+de_genes_kept <- calcNormFactors(de_genes_kept)
 # Examine normalisation factors as a sanity check again
 de_genes_kept$samples
 
