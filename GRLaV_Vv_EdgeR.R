@@ -1,6 +1,7 @@
 
 library(edgeR)
 library(limma)
+library(dplyr)
 
 rm(list=ls())
 
@@ -37,14 +38,14 @@ GRLaV3_vs_Vv[,1] <- NULL
 
 par(pty="s")
 
-pairs(log2(GRLaV3_vs_Vv), labels=colnames(GRLaV3_vs_Vv), upper.panel=panel.points, lower.panel=panel.corr,
-      pch=16, cex=0.4, asp=1)
+suppressWarnings(pairs(log2(GRLaV3_vs_Vv), labels=colnames(GRLaV3_vs_Vv), upper.panel=panel.points, lower.panel=panel.corr,
+                       pch=16, cex=0.4, asp=1))
 
-pairs(log2(GRLaV3_vs_Vv), labels=colnames(GRLaV3_vs_Vv), upper.panel=panel.points, lower.panel=panel.corr,
-      maTransform=TRUE, xlim=c(0,20), ylim=c(-8,8), pch=16, cex=0.4, asp=1)
+suppressWarnings(pairs(log2(GRLaV3_vs_Vv), labels=colnames(GRLaV3_vs_Vv), upper.panel=panel.points, lower.panel=panel.corr,
+                       maTransform=TRUE, xlim=c(0,20), ylim=c(-8,8), pch=16, cex=0.4, asp=1))
 
 
-plotMDS(log2(GRLaV3_vs_Vv+0.5), top=1000)
+# plotMDS(log2(GRLaV3_vs_Vv+0.5), top=1000)
 
 
 ## How many samples are 0 in All samples?
@@ -95,13 +96,14 @@ abline(v=log2(cpmlimit), col="red", lty=2)
 ## Sanity check how many are kept
 table(keep)
 
+par(pty="s")
 
 ## Visualize filtering
-pairs(log2(GRLaV3_vs_Vv), labels=colnames(GRLaV3_vs_Vv), upper.panel=panel.points, lower.panel=panel.corr,
-      pch=16, cex=0.1, asp=1, col=c("black","grey")[(keep)+1], main="Filtering effect")
+suppressWarnings(pairs(log2(GRLaV3_vs_Vv), labels=colnames(GRLaV3_vs_Vv), upper.panel=panel.points, lower.panel=panel.corr,
+                       pch=16, cex=0.1, asp=1, col=c("black","grey")[(keep)+1], main="Filtering effect"))
 
-pairs(log2(GRLaV3_vs_Vv), labels=colnames(GRLaV3_vs_Vv), upper.panel=panel.points, lower.panel=panel.corr,
-      maTransform=TRUE, xlim=c(0,20), ylim=c(-8,8), pch=16, cex=0.1, asp=1, col=c("black", "grey")[(keep)+1], main="MAplot Filtering effect")
+suppressWarnings(pairs(log2(GRLaV3_vs_Vv), labels=colnames(GRLaV3_vs_Vv), upper.panel=panel.points, lower.panel=panel.corr,
+                       maTransform=TRUE, xlim=c(0,20), ylim=c(-8,8), pch=16, cex=0.1, asp=1, col=c("black", "grey")[(keep)+1], main="MAplot Filtering effect"))
 
 
 ## Distribution of counts after filtering
