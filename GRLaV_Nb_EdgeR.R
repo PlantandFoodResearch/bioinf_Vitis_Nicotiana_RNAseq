@@ -1,7 +1,6 @@
 GRLaV3_vs_Nb <- read.delim('/workspace/hradxj/karmun_awesome_experiment/010.edgeR_Nb/GRLaV3_Nb_EdgeR.tab',header=TRUE)
 # Load edgeR
-source("https://bioconductor.org/biocLite.R")
-biocLite("edgeR")
+
 library(edgeR)
 
 # Row names are not unique for some reason. Crap annotations again.
@@ -26,14 +25,14 @@ de_genes$samples
 # Filter out low expressed genes on the basis of the count per million
 # This filters out genes that are less than cpmlimit, and 
 # that are not expressed in libexplimit number of libraries
-cpmlimit <- 1000
+cpmlimit <- 10
 libexplimit <- 3
 keep <- rowSums(cpm(de_genes)>cpmlimit) >= libexplimit
-
+sum(keep)
 
 de_genes_kept <- de_genes[keep, , keep.lib.sizes=FALSE]
 # Calculate normalisation factors again
-de_genes_kept <- calcNormFactors(de_genes)
+de_genes_kept <- calcNormFactors(de_genes_kept)
 # Examine normalisation factors as a sanity check again
 de_genes_kept$samples
 
@@ -58,7 +57,7 @@ de_genes_kept <- estimateDisp(de_genes_kept,design)
 
 # Use the glm to obtain DE genes
 fitglm <- glmFit(de_genes_kept,design)
-lrtglm <- glmLRT(fit,coef=2)
+lrtglm <- glmLRT(fitglm,coef=2)
 topTags(lrtglm, n=10)
 
 
