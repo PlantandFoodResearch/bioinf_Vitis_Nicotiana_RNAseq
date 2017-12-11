@@ -1,3 +1,12 @@
+---
+title: "N. benthamiana"
+author: "Marcus Davy, Dan Jones"
+date: "08/12/2017"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
 
 library(edgeR)
 library(limma)
@@ -5,18 +14,23 @@ library(dplyr)
 
 rm(list=ls())
 
-
 ## Graphics functions for pairs plots
 source("functions.R")
+```
 
+## Count data
+
+Checking names in dataset do not contain duplicated names, or missing names. A missing annotation could imply an off by $n$ allocation of gene names to count data, which would make all gene lookups after the first position of the mislabelled record meaningless.
+
+```{r load}
 filename <- '/workspace/hradxj/karmun_awesome_experiment/010.edgeR_Nb/GRLaV3_Nb_EdgeR.tab'
 
 GRLaV3_vs_Nb <- read.delim(filename, header=TRUE)
 dim(GRLaV3_vs_Nb)
 #GRLaV3_vs_Nb2 <- read.table(filename, header=TRUE, sep="\t")
 
-## Sanity check names problem
-## Missing Gene name - Looks like an off by one error indroduced in preprocessing/filtering
+## Sanity check names
+## Check for missing Gene names
 GRLaV3_vs_Nb[which(GRLaV3_vs_Nb$Gene %in% ""), ]
 
 ## Duplicated names
@@ -33,9 +47,11 @@ GRLaV3_vs_Nb[which(GRLaV3_vs_Nb$Gene %in% badnames),]
 
 # Remove the redundant column where the row names came from
 GRLaV3_vs_Nb[,1] <- NULL
+```
 
-## Healthy.2 replicate is different from the other samples (including the other biological replicate)
+## Data exporation
 
+```{r exploration}
 par(pty="s")
 
 suppressWarnings(pairs(log2(GRLaV3_vs_Nb), labels=colnames(GRLaV3_vs_Nb), upper.panel=panel.points, lower.panel=panel.corr,
@@ -45,7 +61,7 @@ suppressWarnings(pairs(log2(GRLaV3_vs_Nb), labels=colnames(GRLaV3_vs_Nb), upper.
       maTransform=TRUE, xlim=c(0,20), ylim=c(-8,8), pch=16, cex=0.4, asp=1))
 
 
-# plotMDS(log2(GRLaV3_vs_Nb+0.5), top=1000)
+#plotMDS(log2(GRLaV3_vs_Nb+0.5), top=1000)
 
 
 ## How many samples are 0 in All samples?
@@ -72,7 +88,22 @@ tweak  <- 1
 for(i in colnames(all_genes)) {
   hist(log2(all_genes$counts+tweak)[, i], breaks=breaks, main=i, xlab="log2(counts)")
 }
+```
 
+`Healthy.2` replicate is different from the other samples (including the other biological replicate)
+
+The spike in the histograms are the zero counts in each sample.
+
+## Filtering
+
+Library normalization factors estimated using trimmed mean of M values (TMM).
+
+Alternative less aggressive filtering of only genes where all data was zero counts was used.
+In this experiment over filtering has the additional side effect of effecting the misture distribution
+of modelled raw p-values which should be distibuted Ho: Unif(0,1) , Ha: exp(rate).
+
+
+```{r filtering}
 # Calculate normalisation factors
 all_genes <- calcNormFactors(all_genes, method="TMM")
 
@@ -99,11 +130,9 @@ table(keep)
 par(pty="s")
 
 ## Visualize filtering
-suppressWarnings(pairs(log2(GRLaV3_vs_Nb), labels=colnames(GRLaV3_vs_Nb), upper.panel=panel.points, lower.panel=panel.corr,
-      pch=16, cex=0.1, asp=1, col=c("black","grey")[(keep)+1], main="Filtering effect"))
+suppressWarnings(pairs(log2(GRLaV3_vs_Nb), labels=colnames(GRLaV3_vs_Nb), upper.panel=panel.points, lower.panel=panel.corr, pch=16, cex=0.1, asp=1, col=c("black","grey")[(keep)+1], main="Filtering effect"))
 
-      suppressWarnings(pairs(log2(GRLaV3_vs_Nb), labels=colnames(GRLaV3_vs_Nb), upper.panel=panel.points, lower.panel=panel.corr,
-      maTransform=TRUE, xlim=c(0,20), ylim=c(-8,8), pch=16, cex=0.1, asp=1, col=c("black", "grey")[(keep)+1], main="MAplot Filtering effect"))
+suppressWarnings(pairs(log2(GRLaV3_vs_Nb), labels=colnames(GRLaV3_vs_Nb), upper.panel=panel.points, lower.panel=panel.corr, maTransform=TRUE, xlim=c(0,20), ylim=c(-8,8), pch=16, cex=0.1, asp=1, col=c("black", "grey")[(keep)+1], main="MAplot Filtering effect"))
 
 
 ## Distribution of counts after filtering
@@ -118,7 +147,6 @@ keep <- !apply(GRLaV3_vs_Nb==0, 1, all)
 ## Sanity check how many are kept
 table(keep)
 
-## Must use which here
 all_genes_kept <- all_genes[which(keep), keep.lib.sizes=FALSE]
 
 ## Sanity check
@@ -135,6 +163,14 @@ all_genes_kept$samples
 
 ## Benth.Healthy.2 is an order of magnitude smaller!
 apply(GRLaV3_vs_Nb,2, sum)[1] / apply(GRLaV3_vs_Nb,2, sum)[2]
+```
+
+Of note here is the `Benth.Healthy.1` sample has `r apply(GRLaV3_vs_Nb,2, sum)[1] / apply(GRLaV3_vs_Nb,2, sum)[2]` times the library size of `Benth.Healthy.2`. Why are the two libraries so different?
+
+## edgeR models
+
+```{r modelling}
+
 
 # Todo: Need to look at underlying bam mapping scores...
 
@@ -180,8 +216,8 @@ hist(pvals)
 # rownames(topN$table)[ind]
 # GRLaV3_vs_Nb[rownames(topN$table)[ind],]
 
-pi0_hat <- limma::convest(pvals)
-print(pi0_hat)
+#pi0_hat <- limma::convest(pvals)
+#print(pi0_hat)
 
 # Use the quasi-likelihood model to obtain DE genes.
 # From edgeR manual: 
@@ -211,5 +247,9 @@ hist(pvals)
 # rownames(topN$table)[ind]
 # GRLaV3_vs_Nb[rownames(topN$table)[ind],]
 
-pi0_hat <- limma::convest(pvals)
-print(pi0_hat)
+#pi0_hat <- limma::convest(pvals)
+#print(pi0_hat)
+
+```
+
+
