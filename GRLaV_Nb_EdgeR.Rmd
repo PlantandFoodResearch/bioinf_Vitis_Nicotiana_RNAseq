@@ -20,7 +20,7 @@ source("functions.R")
 
 ## Count data
 
-Checking names in dataset do not contain duplicated names, or missing names. A missing annotation could imply an off by $n$ allocation of gene names to count data, which would make all gene lookups after the first position of the mislabelled record meaningless.
+Checking names in dataset do not contain duplicated names, or missing names. A missing annotation could imply an off by $n$ allocation of gene names to count data, which would make all gene look ups after the first position of the mislabeled record meaningless.
 
 ```{r load}
 filename <- '/workspace/hradxj/karmun_awesome_experiment/010.edgeR_Nb/GRLaV3_Nb_EdgeR.tab'
@@ -99,8 +99,8 @@ The spike in the histograms are the zero counts in each sample.
 Library normalization factors estimated using trimmed mean of M values (TMM).
 
 Alternative less aggressive filtering of only genes where all data was zero counts was used.
-In this experiment over filtering has the additional side effect of effecting the misture distribution
-of modelled raw p-values which should be distibuted Ho: Unif(0,1) , Ha: exp(rate).
+In this experiment over filtering has the additional side effect of effecting the mixture distribution
+of modeled raw p-values which should be distributed Ho: unif(0,1) , Ha: exp(rate).
 
 
 ```{r filtering}
@@ -167,6 +167,8 @@ apply(GRLaV3_vs_Nb,2, sum)[1] / apply(GRLaV3_vs_Nb,2, sum)[2]
 
 Of note here is the `Benth.Healthy.1` sample has `r apply(GRLaV3_vs_Nb,2, sum)[1] / apply(GRLaV3_vs_Nb,2, sum)[2]` times the library size of `Benth.Healthy.2`. Why are the two libraries so different?
 
+Filtering out all gene models where no count is observed has no effect on library size estimation.
+
 ## edgeR models
 
 ```{r modelling}
@@ -216,8 +218,9 @@ hist(pvals)
 # rownames(topN$table)[ind]
 # GRLaV3_vs_Nb[rownames(topN$table)[ind],]
 
-#pi0_hat <- limma::convest(pvals)
-#print(pi0_hat)
+
+pi0_hat <- limma::convest(pvals)
+print(pi0_hat)
 
 # Use the quasi-likelihood model to obtain DE genes.
 # From edgeR manual: 
@@ -247,9 +250,8 @@ hist(pvals)
 # rownames(topN$table)[ind]
 # GRLaV3_vs_Nb[rownames(topN$table)[ind],]
 
-#pi0_hat <- limma::convest(pvals)
-#print(pi0_hat)
-
+pi0_hat <- limma::convest(pvals)
+print(pi0_hat)
 ```
 
 
