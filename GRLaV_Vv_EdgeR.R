@@ -214,5 +214,11 @@ hist(pvals)
 pi0_hat <- limma::convest(pvals)
 print(pi0_hat)
 
+# Obtaining genes that show zero differential expression
+
+high_expressed_no_de_genes <- subset(topN2$table, logFC < 0.01 & logFC > -0.01 & logCPM > 6)
+dim(high_expressed_no_de_genes)
+high_expressed_no_de_genes
+
 
 

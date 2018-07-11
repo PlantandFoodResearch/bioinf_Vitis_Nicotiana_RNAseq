@@ -7,7 +7,7 @@ rm(list=ls())
 
 
 ## Graphics functions for pairs plots
-source("functions.R")
+source("/workspace/hradxj/bioinf_Vitis_Nicotiana_RNAseq/functions.R")
 
 filename <- '/workspace/hradxj/karmun_awesome_experiment/010.edgeR_Nb/GRLaV3_Nb_EdgeR.tab'
 
@@ -213,3 +213,9 @@ hist(pvals)
 
 pi0_hat <- limma::convest(pvals)
 print(pi0_hat)
+
+# Obtaining genes that show zero differential expression
+
+high_expressed_no_de_genes <- subset(topN2$table, logFC < 0.01 & logFC > -0.01 & logCPM > 6)
+dim(high_expressed_no_de_genes)
+high_expressed_no_de_genes
