@@ -188,9 +188,9 @@ print(pi0_hat)
 #"While the likelihood ratio test is a more obvious choice for inferences with GLMs, the QL
 #F-test is preferred as it reflects the uncertainty in estimating the dispersion for each gene. It
 #provides more robust and reliable error rate control when the number of replicates is small"
-fitqlm  <- glmQLFit(all_genes_kept, design)
-qlftest <- glmQLFTest(fitqlm, coef=2)
-topN2   <- topTags(qlftest, n=nrow(lrtglm))
+fitglm <- glmQLFit(all_genes_kept, design)
+qlfglm <- glmQLFTest(fitglm, coef=2)
+topN2  <- topTags(qlfglm, n=nrow(qlfglm))
 
 threshold <- 0.05
 de_genes2 <- topN2$table[topN2$table$FDR<threshold,]

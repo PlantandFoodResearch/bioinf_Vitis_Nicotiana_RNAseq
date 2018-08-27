@@ -160,6 +160,8 @@ fitglm <- glmFit(all_genes_kept, design)
 lrtglm <- glmLRT(fitglm, coef=2)
 topN   <- topTags(lrtglm, n=nrow(lrtglm))
 
+summary(decideTests(lrtglm))
+
 
 threshold <- 0.05
 de_genes  <- topN$table[topN$table$FDR<threshold,]
@@ -180,17 +182,19 @@ hist(pvals)
 # rownames(topN$table)[ind]
 # GRLaV3_vs_Vv[rownames(topN$table)[ind],]
 
-pi0_hat <- limma::convest(pvals)
-print(pi0_hat)
+#pi0_hat <- limma::convest(pvals)
+#print(pi0_hat)
 
 # Use the quasi-likelihood model to obtain DE genes.
 # From edgeR manual: 
 #"While the likelihood ratio test is a more obvious choice for inferences with GLMs, the QL
 #F-test is preferred as it reflects the uncertainty in estimating the dispersion for each gene. It
 #provides more robust and reliable error rate control when the number of replicates is small"
-fitqlm  <- glmQLFit(all_genes_kept, design)
-qlftest <- glmQLFTest(fitqlm, coef=2)
-topN2   <- topTags(qlftest, n=nrow(lrtglm))
+fitglm  <- glmQLFit(all_genes_kept, design)
+qlfglm  <- glmQLFTest(fitglm, coef=2)
+topN2   <- topTags(qlfglm, n=nrow(qlfglm))
+
+summary(decideTests(qlfglm))
 
 threshold <- 0.05
 de_genes2 <- topN2$table[topN2$table$FDR<threshold,]
@@ -211,8 +215,8 @@ hist(pvals)
 # rownames(topN$table)[ind]
 # GRLaV3_vs_Vv[rownames(topN$table)[ind],]
 
-pi0_hat <- limma::convest(pvals)
-print(pi0_hat)
+#pi0_hat <- limma::convest(pvals)
+#print(pi0_hat)
 
 
 
