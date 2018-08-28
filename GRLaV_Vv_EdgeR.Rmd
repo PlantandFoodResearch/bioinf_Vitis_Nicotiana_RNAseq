@@ -1,5 +1,5 @@
 ---
-title: "RNA-Seq aligned against N. benthamiana"
+title: "RNA-Seq aligned against V. vinifera"
 author: "Marcus Davy, Dan Jones"
 date: "08/12/2017"
 output: github_document
@@ -16,7 +16,7 @@ rm(list=ls())
 
 est_pi0 <- TRUE
 
-imgDir <- "images/Nb"
+imgDir <- "images/Vv"
 dir.create(imgDir, recursive=TRUE, showWarnings = FALSE)
 ## Graphics functions for pairs plots
 source("functions.R")
@@ -27,30 +27,30 @@ source("functions.R")
 Checking names in dataset do not contain duplicated names, or missing names. A missing annotation could imply an off by $n$ allocation of gene names to count data, which would make all gene look ups after the first position of the mislabeled record meaningless.
 
 ```{r load}
-filename <- '/workspace/hradxj/karmun_awesome_experiment/010.edgeR_Nb/GRLaV3_Nb_EdgeR.tab'
+filename <- '/workspace/hradxj/karmun_awesome_experiment/011.edgeR_Vv/GRLaV3_Vv_EdgeR.tab'
 
-GRLaV3_vs_Nb <- read.delim(filename, header=TRUE)
-dim(GRLaV3_vs_Nb)
-#GRLaV3_vs_Nb2 <- read.table(filename, header=TRUE, sep="\t")
+GRLaV3_vs_Vv <- read.delim(filename, header=TRUE)
+dim(GRLaV3_vs_Vv)
+#GRLaV3_vs_Vv2 <- read.table(filename, header=TRUE, sep="\t")
 
 ## Sanity check names
 ## Check for missing Gene names
-GRLaV3_vs_Nb[which(GRLaV3_vs_Nb$Gene %in% ""), ]
+GRLaV3_vs_Vv[which(GRLaV3_vs_Vv$Gene %in% ""), ]
 
 ## Duplicated names
-badnames <- names(table(GRLaV3_vs_Nb$Gene))[table(GRLaV3_vs_Nb$Gene)>1]
-GRLaV3_vs_Nb[which(GRLaV3_vs_Nb$Gene %in% badnames), ]
+badnames <- names(table(GRLaV3_vs_Vv$Gene))[table(GRLaV3_vs_Vv$Gene)>1]
+GRLaV3_vs_Vv[which(GRLaV3_vs_Vv$Gene %in% badnames), ]
 
 # Row names are not unique for some reason. Crap annotations again.
 # Assign unique row names using the preexisting names, but making them
 # unique where required by adding ".1, .2" etc.
-rownames(GRLaV3_vs_Nb) <- make.names(GRLaV3_vs_Nb[,1], unique=TRUE)
+rownames(GRLaV3_vs_Vv) <- make.names(GRLaV3_vs_Vv[,1], unique=TRUE)
 
 ## Sanity check
-GRLaV3_vs_Nb[which(GRLaV3_vs_Nb$Gene %in% badnames),]
+GRLaV3_vs_Vv[which(GRLaV3_vs_Vv$Gene %in% badnames),]
 
 # Remove the redundant column where the row names came from
-GRLaV3_vs_Nb[,1] <- NULL
+GRLaV3_vs_Vv[,1] <- NULL
 ```
 
 ## Data exploration
@@ -58,26 +58,26 @@ GRLaV3_vs_Nb[,1] <- NULL
 ```{r exploration}
 par(pty="s")
 
-suppressWarnings(pairs(log2(GRLaV3_vs_Nb), labels=colnames(GRLaV3_vs_Nb), upper.panel=panel.points, lower.panel=panel.corr,
+suppressWarnings(pairs(log2(GRLaV3_vs_Vv), labels=colnames(GRLaV3_vs_Vv), upper.panel=panel.points, lower.panel=panel.corr,
       pch=16, cex=0.4, asp=1))
 
-suppressWarnings(pairs(log2(GRLaV3_vs_Nb), labels=colnames(GRLaV3_vs_Nb), upper.panel=panel.points, lower.panel=panel.corr,
+suppressWarnings(pairs(log2(GRLaV3_vs_Vv), labels=colnames(GRLaV3_vs_Vv), upper.panel=panel.points, lower.panel=panel.corr,
       maTransform=TRUE, xlim=c(0,20), ylim=c(-8,8), pch=16, cex=0.4, asp=1))
 
 
-#plotMDS(log2(GRLaV3_vs_Nb+0.5), top=1000)
+#plotMDS(log2(GRLaV3_vs_Vv+0.5), top=1000)
 
 
 ## How many samples are 0 in All samples?
 # Filtering these has no effect on cpm/rpkm calculations
-apply(GRLaV3_vs_Nb==0, 1, all)  %>%  table
+apply(GRLaV3_vs_Vv==0, 1, all)  %>%  table
 
 
 # set the replicate relationship.. columns 1 and 2 are reps of each other
 ## Healthy vs Infected
-replicate_relationship <- factor(c(1,1,2))
+replicate_relationship <- factor(c(1,2,2))
 # construct the DGEList object
-all_genes <- DGEList(counts=GRLaV3_vs_Nb, group=replicate_relationship)
+all_genes <- DGEList(counts=GRLaV3_vs_Vv, group=replicate_relationship)
 
 for( i in seq(ncol(all_genes))) {
   plotMD.DGEList(all_genes, column=i)
@@ -94,7 +94,7 @@ for(i in colnames(all_genes)) {
 }
 ```
 
-`Healthy.2` replicate is different from the other samples (including the other biological replicate)
+`Grape.Infected.1` replicate is different from the other samples (including the other biological replicate)
 
 The spike in the histograms are the zero counts in each sample.
 
@@ -113,15 +113,15 @@ all_genes <- calcNormFactors(all_genes, method="TMM")
 
 # Examine normalisation factors as a sanity check
 all_genes$samples
-# We can see that Benth.Healthy2 had a lot less sequencing.
+# We can see that Benth.Healthy, Grape.Infected.2 had a lot less sequencing.
 
 # Nonsensical results can happen if we do not remove genes
 # that are not biologically relevant because of low expression
 # Filter out low expressed genes on the basis of the count per million
 # This filters out genes that are less than cpmlimit, and 
 # that are not expressed in libexplimit number of libraries
-cpmlimit    <- 1
-libexplimit <- 1
+cpmlimit    <- 10
+libexplimit <- 2
 keep <- rowSums(cpm(all_genes)>cpmlimit) >= libexplimit
 
 ## Visualize
@@ -134,21 +134,9 @@ table(keep)
 par(pty="s")
 
 ## Visualize filtering
-suppressWarnings(pairs(log2(GRLaV3_vs_Nb), labels=colnames(GRLaV3_vs_Nb), upper.panel=panel.points, lower.panel=panel.corr, pch=16, cex=0.1, asp=1, col=c("black","grey")[(keep)+1], main="Filtering effect"))
+suppressWarnings(pairs(log2(GRLaV3_vs_Vv), labels=colnames(GRLaV3_vs_Vv), upper.panel=panel.points, lower.panel=panel.corr, pch=16, cex=0.1, asp=1, col=c("black","grey")[(keep)+1], main="Filtering effect"))
 
-suppressWarnings(pairs(log2(GRLaV3_vs_Nb), labels=colnames(GRLaV3_vs_Nb), upper.panel=panel.points, lower.panel=panel.corr, maTransform=TRUE, xlim=c(0,20), ylim=c(-8,8), pch=16, cex=0.1, asp=1, col=c("black", "grey")[(keep)+1], main="MAplot Filtering effect"))
-
-## Alternative filter which overrides line:89
-keep <- !apply(GRLaV3_vs_Nb==0, 1, all)
-
-## Sanity check how many are kept
-table(keep)
-
-## Visualize filtering
-suppressWarnings(pairs(log2(GRLaV3_vs_Nb), labels=colnames(GRLaV3_vs_Nb), upper.panel=panel.points, lower.panel=panel.corr, pch=16, cex=0.1, asp=1, col=c("black","grey")[(keep)+1], main="Filtering effect"))
-
-suppressWarnings(pairs(log2(GRLaV3_vs_Nb), labels=colnames(GRLaV3_vs_Nb), upper.panel=panel.points, lower.panel=panel.corr, maTransform=TRUE, xlim=c(0,20), ylim=c(-8,8), pch=16, cex=0.1, asp=1, col=c("black", "grey")[(keep)+1], main="MAplot Filtering effect"))
-
+suppressWarnings(pairs(log2(GRLaV3_vs_Vv), labels=colnames(GRLaV3_vs_Vv), upper.panel=panel.points, lower.panel=panel.corr, maTransform=TRUE, xlim=c(0,20), ylim=c(-8,8), pch=16, cex=0.1, asp=1, col=c("black", "grey")[(keep)+1], main="MAplot Filtering effect"))
 
 
 ## Distribution of counts after filtering
@@ -156,6 +144,12 @@ for(i in colnames(all_genes)) {
   hist(log2(all_genes$counts+tweak)[keep , i], breaks=breaks, main=i, xlab="log2(counts)")
 }
 
+
+## Alternative filter which overrides line:89
+# keep <- !apply(GRLaV3_vs_Vv==0, 1, all)
+
+## Sanity check how many are kept
+# table(keep)
 
 all_genes_kept <- all_genes[which(keep), keep.lib.sizes=FALSE]
 
@@ -167,15 +161,15 @@ dim(all_genes_kept)
 all_genes_kept <- calcNormFactors(all_genes_kept, method="TMM")
 
 ## Sanity check
-apply(GRLaV3_vs_Nb,2, sum)
+apply(GRLaV3_vs_Vv,2, sum)
 calcNormFactors(all_genes, method="TMM")
 all_genes_kept$samples
 
-## Benth.Healthy.2 is an order of magnitude smaller!
-apply(GRLaV3_vs_Nb,2, sum)[1] / apply(GRLaV3_vs_Nb,2, sum)[2]
+## Grape.Infected.2 is an order of magnitude smaller!
+apply(GRLaV3_vs_Vv,2, sum)[2] / apply(GRLaV3_vs_Vv,2, sum)[3]
 ```
 
-Of note here is the `Benth.Healthy.1` sample has `r apply(GRLaV3_vs_Nb,2, sum)[1] / apply(GRLaV3_vs_Nb,2, sum)[2]` times the library size of `Benth.Healthy.2`. Why are the two libraries so different?
+Of note here is the `Grape.Infected.1` sample has `r apply(GRLaV3_vs_Vv,2, sum)[2] / apply(GRLaV3_vs_Vv,2, sum)[3]` times the library size of `Grape.Infected.2`. Why are the two libraries so different?
 
 Filtering out all gene models where no count is observed has no effect on library size estimation.
 
@@ -236,7 +230,7 @@ hist(pvals)
 ## Investigating abnormal right hand peak in pvalue histogram
 # ind <- which(pvals>=1)
 # rownames(topN$table)[ind]
-# GRLaV3_vs_Nb[rownames(topN$table)[ind],]
+# GRLaV3_vs_Vv[rownames(topN$table)[ind],]
 
 if(est_pi0) {
   pi0_hat <- limma::convest(pvals)
@@ -248,12 +242,12 @@ if(est_pi0) {
 #"While the likelihood ratio test is a more obvious choice for inferences with GLMs, the QL
 #F-test is preferred as it reflects the uncertainty in estimating the dispersion for each gene. It
 #provides more robust and reliable error rate control when the number of replicates is small"
-fitqlm  <- glmQLFit(all_genes_kept, design)
-qlftest <- glmQLFTest(fitqlm, coef=2)
-topN2   <- topTags(qlftest, n=nrow(lrtglm))
+fitglm <- glmQLFit(all_genes_kept, design)
+qlfglm <- glmQLFTest(fitglm, coef=2)
+topN2  <- topTags(qlfglm, n=nrow(qlfglm))
 
 
-summary(decideTests(qlftest))
+summary(decideTests(qlfglm))
 plotMD(lrtglm, cex=0.5, main="Infected vs Healthy")
 
 openDevice("png", file.path(imgDir, "maplot_ql"))
@@ -280,7 +274,7 @@ hist(pvals2)
 ## Investigating abnormal right hand peak in pvalue histogram
 # ind <- which(pvals>=1)
 # rownames(topN$table)[ind]
-# GRLaV3_vs_Nb[rownames(topN$table)[ind],]
+# GRLaV3_vs_Vv[rownames(topN$table)[ind],]
 
 if(est_pi0) {
   pi0_hat2 <- limma::convest(pvals2)
