@@ -1,12 +1,18 @@
-N. benthamiana
+RNA-Seq aligned against N. benthamiana
 ================
 Marcus Davy, Dan Jones
-08/12/2017
+
+<!-- Note: Rendering of urls in github rmarkdown will not work -->
+> The master version of this document is on *[github](https://github.com/PlantandFoodResearch/bioinf_Vitis_Nicotiana_RNAseq)*. This printing is shasum version *[c04984e](https://github.com/PlantandFoodResearch/bioinf_Vitis_Nicotiana_RNAseq/commit/c04984e)* from that repository.
+
+> Rmd =&gt; R files rendered with;
+
+    ## knitr::purl("GRLaV_Nb_EdgeR.Rmd", documentation=2L)
 
 Count data
 ----------
 
-Checking names in dataset do not contain duplicated names, or missing names. A missing annotation could imply an off by \(n\) allocation of gene names to count data, which would make all gene lookups after the first position of the mislabelled record meaningless.
+Checking names in dataset do not contain duplicated names, or missing names. A missing annotation could imply an off by *n* allocation of gene names to count data, which would make all gene look ups after the first position of the mislabeled record meaningless.
 
 ``` r
 filename <- '/workspace/hradxj/karmun_awesome_experiment/010.edgeR_Nb/GRLaV3_Nb_EdgeR.tab'
@@ -63,8 +69,8 @@ GRLaV3_vs_Nb[which(GRLaV3_vs_Nb$Gene %in% badnames),]
 GRLaV3_vs_Nb[,1] <- NULL
 ```
 
-Data exporation
----------------
+Data exploration
+----------------
 
 ``` r
 par(pty="s")
@@ -73,14 +79,14 @@ suppressWarnings(pairs(log2(GRLaV3_vs_Nb), labels=colnames(GRLaV3_vs_Nb), upper.
       pch=16, cex=0.4, asp=1))
 ```
 
-![](GRLaV_Nb_EdgeR_files/figure-markdown_github-ascii_identifiers/exploration-1.png)
+![](GRLaV_Nb_EdgeR_files/figure-markdown_github/exploration-1.png)
 
 ``` r
 suppressWarnings(pairs(log2(GRLaV3_vs_Nb), labels=colnames(GRLaV3_vs_Nb), upper.panel=panel.points, lower.panel=panel.corr,
       maTransform=TRUE, xlim=c(0,20), ylim=c(-8,8), pch=16, cex=0.4, asp=1))
 ```
 
-![](GRLaV_Nb_EdgeR_files/figure-markdown_github-ascii_identifiers/exploration-2.png)
+![](GRLaV_Nb_EdgeR_files/figure-markdown_github/exploration-2.png)
 
 ``` r
 #plotMDS(log2(GRLaV3_vs_Nb+0.5), top=1000)
@@ -108,7 +114,7 @@ for( i in seq(ncol(all_genes))) {
 }
 ```
 
-![](GRLaV_Nb_EdgeR_files/figure-markdown_github-ascii_identifiers/exploration-3.png)![](GRLaV_Nb_EdgeR_files/figure-markdown_github-ascii_identifiers/exploration-4.png)![](GRLaV_Nb_EdgeR_files/figure-markdown_github-ascii_identifiers/exploration-5.png)
+![](GRLaV_Nb_EdgeR_files/figure-markdown_github/exploration-3.png)![](GRLaV_Nb_EdgeR_files/figure-markdown_github/exploration-4.png)![](GRLaV_Nb_EdgeR_files/figure-markdown_github/exploration-5.png)
 
 ``` r
 breaks <- seq(0, ceiling(max(log2(all_genes$counts))))
@@ -120,7 +126,7 @@ for(i in colnames(all_genes)) {
 }
 ```
 
-![](GRLaV_Nb_EdgeR_files/figure-markdown_github-ascii_identifiers/exploration-6.png)![](GRLaV_Nb_EdgeR_files/figure-markdown_github-ascii_identifiers/exploration-7.png)![](GRLaV_Nb_EdgeR_files/figure-markdown_github-ascii_identifiers/exploration-8.png)
+![](GRLaV_Nb_EdgeR_files/figure-markdown_github/exploration-6.png)![](GRLaV_Nb_EdgeR_files/figure-markdown_github/exploration-7.png)![](GRLaV_Nb_EdgeR_files/figure-markdown_github/exploration-8.png)
 
 `Healthy.2` replicate is different from the other samples (including the other biological replicate)
 
@@ -131,7 +137,7 @@ Filtering
 
 Library normalization factors estimated using trimmed mean of M values (TMM).
 
-Alternative less aggressive filtering of only genes where all data was zero counts was used. In this experiment over filtering has the additional side effect of effecting the misture distribution of modelled raw p-values which should be distibuted Ho: Unif(0,1) , Ha: exp(rate).
+Alternative less aggressive filtering of only genes where all data was zero counts was used. In this experiment over filtering has the additional side effect of effecting the mixture distribution of modeled raw p-values which should be distributed Ho: unif(0,1) , Ha: exp(rate).
 
 ``` r
 # Calculate normalisation factors
@@ -163,7 +169,7 @@ hist(log2(rowSums(cpm(all_genes))))
 abline(v=log2(cpmlimit), col="red", lty=2)
 ```
 
-![](GRLaV_Nb_EdgeR_files/figure-markdown_github-ascii_identifiers/filtering-1.png)
+![](GRLaV_Nb_EdgeR_files/figure-markdown_github/filtering-1.png)
 
 ``` r
 ## Sanity check how many are kept
@@ -181,22 +187,13 @@ par(pty="s")
 suppressWarnings(pairs(log2(GRLaV3_vs_Nb), labels=colnames(GRLaV3_vs_Nb), upper.panel=panel.points, lower.panel=panel.corr, pch=16, cex=0.1, asp=1, col=c("black","grey")[(keep)+1], main="Filtering effect"))
 ```
 
-![](GRLaV_Nb_EdgeR_files/figure-markdown_github-ascii_identifiers/filtering-2.png)
+![](GRLaV_Nb_EdgeR_files/figure-markdown_github/filtering-2.png)
 
 ``` r
 suppressWarnings(pairs(log2(GRLaV3_vs_Nb), labels=colnames(GRLaV3_vs_Nb), upper.panel=panel.points, lower.panel=panel.corr, maTransform=TRUE, xlim=c(0,20), ylim=c(-8,8), pch=16, cex=0.1, asp=1, col=c("black", "grey")[(keep)+1], main="MAplot Filtering effect"))
 ```
 
-![](GRLaV_Nb_EdgeR_files/figure-markdown_github-ascii_identifiers/filtering-3.png)
-
-``` r
-## Distribution of counts after filtering
-for(i in colnames(all_genes)) {
-  hist(log2(all_genes$counts+tweak)[keep , i], breaks=breaks, main=i, xlab="log2(counts)")
-}
-```
-
-![](GRLaV_Nb_EdgeR_files/figure-markdown_github-ascii_identifiers/filtering-4.png)![](GRLaV_Nb_EdgeR_files/figure-markdown_github-ascii_identifiers/filtering-5.png)![](GRLaV_Nb_EdgeR_files/figure-markdown_github-ascii_identifiers/filtering-6.png)
+![](GRLaV_Nb_EdgeR_files/figure-markdown_github/filtering-3.png)
 
 ``` r
 ## Alternative filter which overrides line:89
@@ -209,6 +206,28 @@ table(keep)
     ## keep
     ## FALSE  TRUE 
     ## 15303 44511
+
+``` r
+## Visualize filtering
+suppressWarnings(pairs(log2(GRLaV3_vs_Nb), labels=colnames(GRLaV3_vs_Nb), upper.panel=panel.points, lower.panel=panel.corr, pch=16, cex=0.1, asp=1, col=c("black","grey")[(keep)+1], main="Filtering effect"))
+```
+
+![](GRLaV_Nb_EdgeR_files/figure-markdown_github/filtering-4.png)
+
+``` r
+suppressWarnings(pairs(log2(GRLaV3_vs_Nb), labels=colnames(GRLaV3_vs_Nb), upper.panel=panel.points, lower.panel=panel.corr, maTransform=TRUE, xlim=c(0,20), ylim=c(-8,8), pch=16, cex=0.1, asp=1, col=c("black", "grey")[(keep)+1], main="MAplot Filtering effect"))
+```
+
+![](GRLaV_Nb_EdgeR_files/figure-markdown_github/filtering-5.png)
+
+``` r
+## Distribution of counts after filtering
+for(i in colnames(all_genes)) {
+  hist(log2(all_genes$counts+tweak)[keep , i], breaks=breaks, main=i, xlab="log2(counts)")
+}
+```
+
+![](GRLaV_Nb_EdgeR_files/figure-markdown_github/filtering-6.png)![](GRLaV_Nb_EdgeR_files/figure-markdown_github/filtering-7.png)![](GRLaV_Nb_EdgeR_files/figure-markdown_github/filtering-8.png)
 
 ``` r
 all_genes_kept <- all_genes[which(keep), keep.lib.sizes=FALSE]
@@ -275,6 +294,8 @@ apply(GRLaV3_vs_Nb,2, sum)[1] / apply(GRLaV3_vs_Nb,2, sum)[2]
 
 Of note here is the `Benth.Healthy.1` sample has 11.5256442 times the library size of `Benth.Healthy.2`. Why are the two libraries so different?
 
+Filtering out all gene models where no count is observed has no effect on library size estimation.
+
 edgeR models
 ------------
 
@@ -304,6 +325,49 @@ lrtglm <- glmLRT(fitglm, coef=2)
 topN   <- topTags(lrtglm, n=nrow(lrtglm))
 
 
+summary(decideTests(lrtglm))
+```
+
+    ##        replicate_relationship2
+    ## Down                       107
+    ## NotSig                   44355
+    ## Up                          49
+
+``` r
+plotMD(lrtglm, cex=0.5, main="Infected vs Healthy")
+```
+
+![](GRLaV_Nb_EdgeR_files/figure-markdown_github/modelling-1.png)
+
+``` r
+openDevice("png", file.path(imgDir, "maplot_lrt"))
+```
+
+    ## [1] "images/Nb/maplot_lrt.png"
+
+``` r
+plotMD(lrtglm, cex=0.5, main="Infected vs Healthy")
+dev.off()
+```
+
+    ## png 
+    ##   2
+
+``` r
+openDevice("tiff", file.path(imgDir, "maplot_lrt"))
+```
+
+    ## [1] "images/Nb/maplot_lrt.tif"
+
+``` r
+plotMD(lrtglm, cex=0.5, main="Infected vs Healthy")
+dev.off()
+```
+
+    ## png 
+    ##   2
+
+``` r
 threshold <- 0.05
 de_genes  <- topN$table[topN$table$FDR<threshold,]
 
@@ -311,7 +375,7 @@ de_genes  <- topN$table[topN$table$FDR<threshold,]
 nrow(de_genes)
 ```
 
-    ## [1] 157
+    ## [1] 156
 
 ``` r
 ## First 10
@@ -319,42 +383,52 @@ head(de_genes, n=10)
 ```
 
     ##                            logFC   logCPM       LR       PValue
-    ## Niben101Scf00107g03008  6.871696 4.682465 63.44245 1.651207e-15
-    ## Niben101Scf05044g02012  6.622188 2.769140 43.62283 3.981664e-11
-    ## Niben101Scf00837g08001 -6.892654 4.177794 39.93940 2.619653e-10
-    ## Niben101Scf03937g00009  5.188397 3.759200 39.49505 3.288917e-10
-    ## Niben101Scf06977g00014 -6.624449 6.394987 35.78775 2.200267e-09
-    ## Niben101Scf03169g00010 -5.974961 4.342707 34.14388 5.118405e-09
-    ## Niben101Scf01475g00019 -6.065090 3.542031 32.77132 1.036629e-08
-    ## Niben101Scf03506g03001  4.587492 3.224802 32.41415 1.245758e-08
-    ## Niben101Scf02971g01006 -9.719596 1.913830 31.37828 2.123431e-08
-    ## Niben101Scf08683g00001 -5.387346 4.306713 29.90128 4.546132e-08
+    ## Niben101Scf00107g03008  6.871699 4.682465 63.44407 1.649850e-15
+    ## Niben101Scf05044g02012  6.622191 2.769140 43.62414 3.979007e-11
+    ## Niben101Scf00837g08001 -6.892553 4.177794 39.84457 2.749970e-10
+    ## Niben101Scf03937g00009  5.188343 3.759200 39.48756 3.301559e-10
+    ## Niben101Scf06977g00014 -6.624423 6.394987 35.68045 2.324855e-09
+    ## Niben101Scf03169g00010 -5.974855 4.342707 34.04949 5.372795e-09
+    ## Niben101Scf01475g00019 -6.064870 3.542031 32.66200 1.096600e-08
+    ## Niben101Scf03506g03001  4.587488 3.224802 32.41610 1.244513e-08
+    ## Niben101Scf02971g01006 -9.719592 1.913830 31.37670 2.125159e-08
+    ## Niben101Scf08683g00001 -5.387247 4.306713 29.82370 4.731716e-08
     ##                                 FDR
-    ## Niben101Scf00107g03008 7.349687e-11
-    ## Niben101Scf05044g02012 8.861393e-07
-    ## Niben101Scf00837g08001 3.659824e-06
-    ## Niben101Scf03937g00009 3.659824e-06
-    ## Niben101Scf06977g00014 1.958722e-05
-    ## Niben101Scf03169g00010 3.797089e-05
-    ## Niben101Scf01475g00019 6.591628e-05
-    ## Niben101Scf03506g03001 6.931239e-05
-    ## Niben101Scf02971g01006 1.050178e-04
-    ## Niben101Scf08683g00001 2.023529e-04
+    ## Niben101Scf00107g03008 7.343648e-11
+    ## Niben101Scf05044g02012 8.855480e-07
+    ## Niben101Scf00837g08001 3.673892e-06
+    ## Niben101Scf03937g00009 3.673892e-06
+    ## Niben101Scf06977g00014 2.069632e-05
+    ## Niben101Scf03169g00010 3.985808e-05
+    ## Niben101Scf01475g00019 6.924314e-05
+    ## Niben101Scf03506g03001 6.924314e-05
+    ## Niben101Scf02971g01006 1.051033e-04
+    ## Niben101Scf08683g00001 2.106134e-04
 
 ``` r
 ## estimate pi0
 pvals <- topN$table$PValue
 
 hist(pvals)
+```
 
+![](GRLaV_Nb_EdgeR_files/figure-markdown_github/modelling-2.png)
+
+``` r
 ## Investigating abnormal right hand peak in pvalue histogram
 # ind <- which(pvals>=1)
 # rownames(topN$table)[ind]
 # GRLaV3_vs_Nb[rownames(topN$table)[ind],]
 
-#pi0_hat <- limma::convest(pvals)
-#print(pi0_hat)
+if(est_pi0) {
+  pi0_hat <- limma::convest(pvals)
+  print(pi0_hat)
+}
+```
 
+    ## [1] 0.9872359
+
+``` r
 # Use the quasi-likelihood model to obtain DE genes.
 # From edgeR manual: 
 #"While the likelihood ratio test is a more obvious choice for inferences with GLMs, the QL
@@ -364,6 +438,50 @@ fitqlm  <- glmQLFit(all_genes_kept, design)
 qlftest <- glmQLFTest(fitqlm, coef=2)
 topN2   <- topTags(qlftest, n=nrow(lrtglm))
 
+
+summary(decideTests(qlftest))
+```
+
+    ##        replicate_relationship2
+    ## Down                       138
+    ## NotSig                   44319
+    ## Up                          54
+
+``` r
+plotMD(lrtglm, cex=0.5, main="Infected vs Healthy")
+```
+
+![](GRLaV_Nb_EdgeR_files/figure-markdown_github/modelling-3.png)
+
+``` r
+openDevice("png", file.path(imgDir, "maplot_ql"))
+```
+
+    ## [1] "images/Nb/maplot_ql.png"
+
+``` r
+plotMD(lrtglm, cex=0.5, main="Infected vs Healthy")
+dev.off()
+```
+
+    ## png 
+    ##   2
+
+``` r
+openDevice("tiff", file.path(imgDir, "maplot_ql"))
+```
+
+    ## [1] "images/Nb/maplot_ql.tif"
+
+``` r
+plotMD(lrtglm, cex=0.5, main="Infected vs Healthy")
+dev.off()
+```
+
+    ## png 
+    ##   2
+
+``` r
 threshold <- 0.05
 de_genes2 <- topN2$table[topN2$table$FDR<threshold,]
 
@@ -403,12 +521,12 @@ head(de_genes2, n=10)
 
 ``` r
 ## estimate pi0
-pvals <- topN$table$PValue
+pvals2 <- topN$table$PValue
 
-hist(pvals)
+hist(pvals2)
 ```
 
-![](GRLaV_Nb_EdgeR_files/figure-markdown_github-ascii_identifiers/modelling-1.png)
+![](GRLaV_Nb_EdgeR_files/figure-markdown_github/modelling-4.png)
 
 ``` r
 ## Investigating abnormal right hand peak in pvalue histogram
@@ -416,6 +534,10 @@ hist(pvals)
 # rownames(topN$table)[ind]
 # GRLaV3_vs_Nb[rownames(topN$table)[ind],]
 
-#pi0_hat <- limma::convest(pvals)
-#print(pi0_hat)
+if(est_pi0) {
+  pi0_hat2 <- limma::convest(pvals2)
+  print(pi0_hat2)
+}
 ```
+
+    ## [1] 0.9872359
