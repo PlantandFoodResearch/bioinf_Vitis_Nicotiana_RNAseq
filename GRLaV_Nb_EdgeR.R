@@ -257,6 +257,13 @@ if(est_pi0) {
   print(pi0_hat)
 }
 
+
+## Obtaining genes that show zero differential expression
+high_expressed_no_de_genes <- subset(topN$table, logFC < 0.01 & logFC > -0.01 & logCPM > 6)
+dim(high_expressed_no_de_genes)
+knitr::kable(high_expressed_no_de_genes)
+
+
 # Use the quasi-likelihood model to obtain DE genes.
 # From edgeR manual: 
 #"While the likelihood ratio test is a more obvious choice for inferences with GLMs, the QL
@@ -287,7 +294,7 @@ head(de_genes2, n=10)
 
 
 ## estimate pi0
-pvals2 <- topN$table$PValue
+pvals2 <- topN2$table$PValue
 
 hist(pvals2)
 
@@ -300,6 +307,11 @@ if(est_pi0) {
   pi0_hat2 <- limma::convest(pvals2)
   print(pi0_hat2)
 }
+
+## Obtaining genes that show zero differential expression
+high_expressed_no_de_genes <- subset(topN2$table, logFC < 0.01 & logFC > -0.01 & logCPM > 6)
+dim(high_expressed_no_de_genes)
+knitr::kable(high_expressed_no_de_genes)
 
 #' 
 #' 
