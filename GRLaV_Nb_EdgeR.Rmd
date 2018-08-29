@@ -1,7 +1,6 @@
 ---
 title: "RNA-Seq aligned against N. benthamiana"
 author: "Marcus Davy, Dan Jones"
-date: "08/12/2017"
 output: github_document
 ---
 
@@ -21,6 +20,21 @@ dir.create(imgDir, recursive=TRUE, showWarnings = FALSE)
 ## Graphics functions for pairs plots
 source("functions.R")
 ```
+
+```{r captureSha1sum, echo=FALSE}
+revision <- gitRevision()
+```
+
+<!-- Note: Rendering of urls in github rmarkdown will not work -->
+> The master version of this document is on *[github](https://github.com/PlantandFoodResearch/bioinf_Vitis_Nicotiana_RNAseq)*.
+> This printing is shasum version *[`r revision`](https://github.com/PlantandFoodResearch/bioinf_Vitis_Nicotiana_RNAseq/commit/`r revision`)* from that repository.
+
+> Rmd => R files rendered with;
+
+```{r echo=FALSE}
+cat(paste0('knitr::purl("', knitr::current_input(), '", documentation=2L)'))
+```
+
 
 ## Count data
 
