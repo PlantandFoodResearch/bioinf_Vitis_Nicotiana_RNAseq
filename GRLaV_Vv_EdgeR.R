@@ -1,3 +1,11 @@
+#' ---
+#' title: "RNA-Seq aligned against V. vinifera"
+#' author: "Marcus Davy, Dan Jones"
+#' output: github_document
+#' ---
+#' 
+## ----setup, include=FALSE------------------------------------------------
+knitr::opts_chunk$set(echo = TRUE)
 
 library(edgeR)
 library(limma)
@@ -5,18 +13,41 @@ library(dplyr)
 
 rm(list=ls())
 
+est_pi0 <- TRUE
 
+imgDir <- "images/Vv"
+dir.create(imgDir, recursive=TRUE, showWarnings = FALSE)
 ## Graphics functions for pairs plots
 source("functions.R")
 
+#' 
+## ----captureSha1sum, echo=FALSE------------------------------------------
+revision <- gitRevision()
+
+#' 
+#' <!-- Note: Rendering of urls in github rmarkdown will not work -->
+#' > The master version of this document is on *[github](https://github.com/PlantandFoodResearch/bioinf_Vitis_Nicotiana_RNAseq)*.
+#' > This printing is shasum version *[`r revision`](https://github.com/PlantandFoodResearch/bioinf_Vitis_Nicotiana_RNAseq/commit/`r revision`)* from that repository.
+#' 
+#' > Rmd => R files rendered with;
+#' 
+## ----echo=FALSE----------------------------------------------------------
+cat(paste0('knitr::purl("', knitr::current_input(), '", documentation=2L)'))
+
+#' 
+#' ## Count data
+#' 
+#' Checking names in dataset do not contain duplicated names, or missing names. A missing annotation could imply an off by $n$ allocation of gene names to count data, which would make all gene look ups after the first position of the mislabeled record meaningless.
+#' 
+## ----load----------------------------------------------------------------
 filename <- '/workspace/hradxj/karmun_awesome_experiment/011.edgeR_Vv/GRLaV3_Vv_EdgeR.tab'
 
 GRLaV3_vs_Vv <- read.delim(filename, header=TRUE)
 dim(GRLaV3_vs_Vv)
 #GRLaV3_vs_Vv2 <- read.table(filename, header=TRUE, sep="\t")
 
-## Sanity check names problem
-## Missing Gene name - Looks like an off by one error indroduced in preprocessing/filtering
+## Sanity check names
+## Check for missing Gene names
 GRLaV3_vs_Vv[which(GRLaV3_vs_Vv$Gene %in% ""), ]
 
 ## Duplicated names
@@ -34,18 +65,20 @@ GRLaV3_vs_Vv[which(GRLaV3_vs_Vv$Gene %in% badnames),]
 # Remove the redundant column where the row names came from
 GRLaV3_vs_Vv[,1] <- NULL
 
-## Healthy.2 replicate is different from the other samples (including the other biological replicate)
-
+#' 
+#' ## Data exploration
+#' 
+## ----exploration---------------------------------------------------------
 par(pty="s")
 
 suppressWarnings(pairs(log2(GRLaV3_vs_Vv), labels=colnames(GRLaV3_vs_Vv), upper.panel=panel.points, lower.panel=panel.corr,
-                       pch=16, cex=0.4, asp=1))
+      pch=16, cex=0.4, asp=1))
 
 suppressWarnings(pairs(log2(GRLaV3_vs_Vv), labels=colnames(GRLaV3_vs_Vv), upper.panel=panel.points, lower.panel=panel.corr,
-                       maTransform=TRUE, xlim=c(0,20), ylim=c(-8,8), pch=16, cex=0.4, asp=1))
+      maTransform=TRUE, xlim=c(0,20), ylim=c(-8,8), pch=16, cex=0.4, asp=1))
 
 
-# plotMDS(log2(GRLaV3_vs_Vv+0.5), top=1000)
+#plotMDS(log2(GRLaV3_vs_Vv+0.5), top=1000)
 
 
 ## How many samples are 0 in All samples?
@@ -73,12 +106,27 @@ for(i in colnames(all_genes)) {
   hist(log2(all_genes$counts+tweak)[, i], breaks=breaks, main=i, xlab="log2(counts)")
 }
 
+#' 
+#' `Grape.Infected.1` replicate is different from the other samples (including the other biological replicate)
+#' 
+#' The spike in the histograms are the zero counts in each sample.
+#' 
+#' ## Filtering
+#' 
+#' Library normalization factors estimated using trimmed mean of M values (TMM).
+#' 
+#' Alternative less aggressive filtering of only genes where all data was zero counts was used.
+#' In this experiment over filtering has the additional side effect of effecting the mixture distribution
+#' of modeled raw p-values which should be distributed Ho: unif(0,1) , Ha: exp(rate).
+#' 
+#' 
+## ----filtering-----------------------------------------------------------
 # Calculate normalisation factors
 all_genes <- calcNormFactors(all_genes, method="TMM")
 
 # Examine normalisation factors as a sanity check
 all_genes$samples
-# We can see that Benth.Healthy2 had a lot less sequencing.
+# We can see that Benth.Healthy, Grape.Infected.2 had a lot less sequencing.
 
 # Nonsensical results can happen if we do not remove genes
 # that are not biologically relevant because of low expression
@@ -99,11 +147,9 @@ table(keep)
 par(pty="s")
 
 ## Visualize filtering
-suppressWarnings(pairs(log2(GRLaV3_vs_Vv), labels=colnames(GRLaV3_vs_Vv), upper.panel=panel.points, lower.panel=panel.corr,
-                       pch=16, cex=0.1, asp=1, col=c("black","grey")[(keep)+1], main="Filtering effect"))
+suppressWarnings(pairs(log2(GRLaV3_vs_Vv), labels=colnames(GRLaV3_vs_Vv), upper.panel=panel.points, lower.panel=panel.corr, pch=16, cex=0.1, asp=1, col=c("black","grey")[(keep)+1], main="Filtering effect"))
 
-suppressWarnings(pairs(log2(GRLaV3_vs_Vv), labels=colnames(GRLaV3_vs_Vv), upper.panel=panel.points, lower.panel=panel.corr,
-                       maTransform=TRUE, xlim=c(0,20), ylim=c(-8,8), pch=16, cex=0.1, asp=1, col=c("black", "grey")[(keep)+1], main="MAplot Filtering effect"))
+suppressWarnings(pairs(log2(GRLaV3_vs_Vv), labels=colnames(GRLaV3_vs_Vv), upper.panel=panel.points, lower.panel=panel.corr, maTransform=TRUE, xlim=c(0,20), ylim=c(-8,8), pch=16, cex=0.1, asp=1, col=c("black", "grey")[(keep)+1], main="MAplot Filtering effect"))
 
 
 ## Distribution of counts after filtering
@@ -113,12 +159,11 @@ for(i in colnames(all_genes)) {
 
 
 ## Alternative filter which overrides line:89
-#keep <- !apply(GRLaV3_vs_Vv==0, 1, all)
+# keep <- !apply(GRLaV3_vs_Vv==0, 1, all)
 
 ## Sanity check how many are kept
-#table(keep)
+# table(keep)
 
-## Must use which here
 all_genes_kept <- all_genes[which(keep), keep.lib.sizes=FALSE]
 
 ## Sanity check
@@ -133,8 +178,18 @@ apply(GRLaV3_vs_Vv,2, sum)
 calcNormFactors(all_genes, method="TMM")
 all_genes_kept$samples
 
-## Benth.Healthy.2 is an order of magnitude smaller!
+## Grape.Infected.2 is an order of magnitude smaller!
 apply(GRLaV3_vs_Vv,2, sum)[2] / apply(GRLaV3_vs_Vv,2, sum)[3]
+
+#' 
+#' Of note here is the `Grape.Infected.1` sample has `r apply(GRLaV3_vs_Vv,2, sum)[2] / apply(GRLaV3_vs_Vv,2, sum)[3]` times the library size of `Grape.Infected.2`. Why are the two libraries so different?
+#' 
+#' Filtering out all gene models where no count is observed has no effect on library size estimation.
+#' 
+#' ## edgeR models
+#' 
+## ----modelling-----------------------------------------------------------
+
 
 # Todo: Need to look at underlying bam mapping scores...
 
@@ -160,8 +215,16 @@ fitglm <- glmFit(all_genes_kept, design)
 lrtglm <- glmLRT(fitglm, coef=2)
 topN   <- topTags(lrtglm, n=nrow(lrtglm))
 
-summary(decideTests(lrtglm))
 
+summary(decideTests(lrtglm))
+plotMD(lrtglm, cex=0.5, main="Infected vs Healthy")
+
+openDevice("png", file.path(imgDir, "maplot_lrt"))
+plotMD(lrtglm, cex=0.5, main="Infected vs Healthy")
+dev.off()
+openDevice("tiff", file.path(imgDir, "maplot_lrt"))
+plotMD(lrtglm, cex=0.5, main="Infected vs Healthy")
+dev.off()
 
 threshold <- 0.05
 de_genes  <- topN$table[topN$table$FDR<threshold,]
@@ -182,19 +245,30 @@ hist(pvals)
 # rownames(topN$table)[ind]
 # GRLaV3_vs_Vv[rownames(topN$table)[ind],]
 
-#pi0_hat <- limma::convest(pvals)
-#print(pi0_hat)
+if(est_pi0) {
+  pi0_hat <- limma::convest(pvals)
+  print(pi0_hat)
+}
 
 # Use the quasi-likelihood model to obtain DE genes.
 # From edgeR manual: 
 #"While the likelihood ratio test is a more obvious choice for inferences with GLMs, the QL
 #F-test is preferred as it reflects the uncertainty in estimating the dispersion for each gene. It
 #provides more robust and reliable error rate control when the number of replicates is small"
-fitglm  <- glmQLFit(all_genes_kept, design)
-qlfglm  <- glmQLFTest(fitglm, coef=2)
-topN2   <- topTags(qlfglm, n=nrow(qlfglm))
+fitglm <- glmQLFit(all_genes_kept, design)
+qlfglm <- glmQLFTest(fitglm, coef=2)
+topN2  <- topTags(qlfglm, n=nrow(qlfglm))
+
 
 summary(decideTests(qlfglm))
+plotMD(lrtglm, cex=0.5, main="Infected vs Healthy")
+
+openDevice("png", file.path(imgDir, "maplot_ql"))
+plotMD(lrtglm, cex=0.5, main="Infected vs Healthy")
+dev.off()
+openDevice("tiff", file.path(imgDir, "maplot_ql"))
+plotMD(lrtglm, cex=0.5, main="Infected vs Healthy")
+dev.off()
 
 threshold <- 0.05
 de_genes2 <- topN2$table[topN2$table$FDR<threshold,]
@@ -206,17 +280,19 @@ head(de_genes2, n=10)
 
 
 ## estimate pi0
-pvals <- topN$table$PValue
+pvals2 <- topN$table$PValue
 
-hist(pvals)
+hist(pvals2)
 
 ## Investigating abnormal right hand peak in pvalue histogram
 # ind <- which(pvals>=1)
 # rownames(topN$table)[ind]
 # GRLaV3_vs_Vv[rownames(topN$table)[ind],]
 
-#pi0_hat <- limma::convest(pvals)
-#print(pi0_hat)
+if(est_pi0) {
+  pi0_hat2 <- limma::convest(pvals2)
+  print(pi0_hat2)
+}
 
-
-
+#' 
+#' 
