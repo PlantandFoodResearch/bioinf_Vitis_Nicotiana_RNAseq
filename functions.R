@@ -37,3 +37,36 @@ panel.corr <- function(x,y, maTransform = FALSE, ...){
     text(x=7.5, y=7.5, labels=substitute(rho==correlation, list(correlation=correlation)))
   }
 }
+
+
+openDevice <- function (device = "png", name = "Rplot", ...){
+  dev <- get(device)
+  Interactive <- c("X11", "quartz", "windows")
+  if (any(device == Interactive)) {
+    dev(...)
+  }
+  else {
+    extMap <- list(cairo_pdf = "pdf", cairo_ps = "ps", jpeg = "jpg", 
+                   postscript = "ps", tiff = "tif")
+    if (!is.null(extMap[[device]])) {
+      filename <- paste(name, extMap[[device]], sep = ".")
+    }
+    else {
+      filename <- paste(name, device, sep = ".")
+    }
+    dev(file = filename, ...)
+    return(filename)
+  }
+  return(invisible())
+}
+
+
+gitRevision <- function(allcommits=FALSE){
+  ## Fetch all commits for a specific file, knitr::current_input() can be NULL
+  ## If the filename is omitted, the latest commits will be returned
+  shasum <- system(paste("git log --pretty=format:'%h'", knitr::current_input()), intern=TRUE)
+  if(!allcommits) {
+    shasum <- shasum[1]
+  }
+  return(shasum)
+}

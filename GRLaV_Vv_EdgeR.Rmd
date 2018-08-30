@@ -1,10 +1,10 @@
-#' ---
-#' title: "RNA-Seq aligned against V. vinifera"
-#' author: "Marcus Davy, Dan Jones"
-#' output: github_document
-#' ---
-#' 
-## ----setup, include=FALSE------------------------------------------------
+---
+title: "RNA-Seq aligned against V. vinifera"
+author: "Marcus Davy, Dan Jones"
+output: github_document
+---
+
+```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
 library(edgeR)
@@ -19,27 +19,27 @@ imgDir <- "images/Vv"
 dir.create(imgDir, recursive=TRUE, showWarnings = FALSE)
 ## Graphics functions for pairs plots
 source("functions.R")
+```
 
-#' 
-## ----captureSha1sum, echo=FALSE------------------------------------------
+```{r captureSha1sum, echo=FALSE}
 revision <- gitRevision()
+```
 
-#' 
-#' <!-- Note: Rendering of urls in github rmarkdown will not work -->
-#' > The master version of this document is on *[github](https://github.com/PlantandFoodResearch/bioinf_Vitis_Nicotiana_RNAseq)*.
-#' > This printing is shasum version *[`r revision`](https://github.com/PlantandFoodResearch/bioinf_Vitis_Nicotiana_RNAseq/commit/`r revision`)* from that repository.
-#' 
-#' > Rmd => R files rendered with;
-#' 
-## ----echo=FALSE----------------------------------------------------------
+<!-- Note: Rendering of urls in github rmarkdown will not work -->
+> The master version of this document is on *[github](https://github.com/PlantandFoodResearch/bioinf_Vitis_Nicotiana_RNAseq)*.
+> This printing is shasum version *[`r revision`](https://github.com/PlantandFoodResearch/bioinf_Vitis_Nicotiana_RNAseq/commit/`r revision`)* from that repository.
+
+> Rmd => R files rendered with;
+
+```{r echo=FALSE}
 cat(paste0('knitr::purl("', knitr::current_input(), '", documentation=2L)'))
+```
 
-#' 
-#' ## Count data
-#' 
-#' Checking names in dataset do not contain duplicated names, or missing names. A missing annotation could imply an off by $n$ allocation of gene names to count data, which would make all gene look ups after the first position of the mislabeled record meaningless.
-#' 
-## ----load----------------------------------------------------------------
+## Count data
+
+Checking names in dataset do not contain duplicated names, or missing names. A missing annotation could imply an off by $n$ allocation of gene names to count data, which would make all gene look ups after the first position of the mislabeled record meaningless.
+
+```{r load}
 filename <- '/workspace/hradxj/karmun_awesome_experiment/011.edgeR_Vv/GRLaV3_Vv_EdgeR.tab'
 
 GRLaV3_vs_Vv <- read.delim(filename, header=TRUE)
@@ -64,11 +64,11 @@ GRLaV3_vs_Vv[which(GRLaV3_vs_Vv$Gene %in% badnames),]
 
 # Remove the redundant column where the row names came from
 GRLaV3_vs_Vv[,1] <- NULL
+```
 
-#' 
-#' ## Data exploration
-#' 
-## ----exploration---------------------------------------------------------
+## Data exploration
+
+```{r exploration}
 par(pty="s")
 
 suppressWarnings(pairs(log2(GRLaV3_vs_Vv), labels=colnames(GRLaV3_vs_Vv), upper.panel=panel.points, lower.panel=panel.corr,
@@ -105,22 +105,22 @@ tweak  <- 1
 for(i in colnames(all_genes)) {
   hist(log2(all_genes$counts+tweak)[, i], breaks=breaks, main=i, xlab="log2(counts)")
 }
+```
 
-#' 
-#' `Grape.Infected.1` replicate is different from the other samples (including the other biological replicate)
-#' 
-#' The spike in the histograms are the zero counts in each sample.
-#' 
-#' ## Filtering
-#' 
-#' Library normalization factors estimated using trimmed mean of M values (TMM).
-#' 
-#' Alternative less aggressive filtering of only genes where all data was zero counts was used.
-#' In this experiment over filtering has the additional side effect of effecting the mixture distribution
-#' of modeled raw p-values which should be distributed Ho: unif(0,1) , Ha: exp(rate).
-#' 
-#' 
-## ----filtering-----------------------------------------------------------
+`Grape.Infected.1` replicate is different from the other samples (including the other biological replicate)
+
+The spike in the histograms are the zero counts in each sample.
+
+## Filtering
+
+Library normalization factors estimated using trimmed mean of M values (TMM).
+
+Alternative less aggressive filtering of only genes where all data was zero counts was used.
+In this experiment over filtering has the additional side effect of effecting the mixture distribution
+of modeled raw p-values which should be distributed Ho: unif(0,1) , Ha: exp(rate).
+
+
+```{r filtering}
 # Calculate normalisation factors
 all_genes <- calcNormFactors(all_genes, method="TMM")
 
@@ -180,15 +180,15 @@ all_genes_kept$samples
 
 ## Grape.Infected.2 is an order of magnitude smaller!
 apply(GRLaV3_vs_Vv,2, sum)[2] / apply(GRLaV3_vs_Vv,2, sum)[3]
+```
 
-#' 
-#' Of note here is the `Grape.Infected.1` sample has `r apply(GRLaV3_vs_Vv,2, sum)[2] / apply(GRLaV3_vs_Vv,2, sum)[3]` times the library size of `Grape.Infected.2`. Why are the two libraries so different?
-#' 
-#' Filtering out all gene models where no count is observed has no effect on library size estimation.
-#' 
-#' ## edgeR models
-#' 
-## ----modelling-----------------------------------------------------------
+Of note here is the `Grape.Infected.1` sample has `r apply(GRLaV3_vs_Vv,2, sum)[2] / apply(GRLaV3_vs_Vv,2, sum)[3]` times the library size of `Grape.Infected.2`. Why are the two libraries so different?
+
+Filtering out all gene models where no count is observed has no effect on library size estimation.
+
+## edgeR models
+
+```{r modelling}
 
 
 # Todo: Need to look at underlying bam mapping scores...
@@ -305,8 +305,8 @@ if(est_pi0) {
 high_expressed_no_de_genes <- subset(topN2$table, logFC < 0.01 & logFC > -0.01 & logCPM > 6)
 dim(high_expressed_no_de_genes)
 knitr::kable(high_expressed_no_de_genes)
+```
 
-#' 
-#' 
-#' 
-#' 
+
+
+
