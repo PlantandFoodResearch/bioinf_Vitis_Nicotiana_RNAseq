@@ -1,0 +1,143 @@
+GRLaV_Nb_Vv
+========================================================
+author: 
+date: 
+width: 1920
+height: 1080
+
+First Slide
+========================================================
+
+For more details on authoring R presentations please visit <https://support.rstudio.com/hc/en-us/articles/200486468>.
+
+- Bullet 1
+- Bullet 2
+- Bullet 3
+
+Load required libraries
+========================================================
+```{r}
+library(edgeR)
+```
+
+Import count data 
+========================================================
+
+Both *N. benthamiana* and *V. vitis* infected with GRLaV, RNAseq performed and read counts
+per gene produced. Import the read count `csv` files.
+
+```{r}
+GRLaV3_vs_Nb <- 
+  read.delim('/workspace/hradxj/karmun_awesome_experiment/010.edgeR_Nb/GRLaV3_Nb_EdgeR.tab',header=TRUE)
+
+GRLaV3_vs_Vv <- 
+  read.delim('/workspace/hradxj/karmun_awesome_experiment/011.edgeR_Vv/GRLaV3_Vv_EdgeR.tab',header=TRUE)
+
+```
+
+Nb expression: data housekeeping
+========================================================
+
+Row names are not unique for some reason. Poor annotations.
+Assign unique row names using the preexisting names, but making them
+unique where required by adding ".1, .2" etc.
+
+```{r}
+rownames(GRLaV3_vs_Nb) <- make.names(GRLaV3_vs_Nb[,1], unique=TRUE)
+```
+
+Remove the redundant column where the row names came from
+
+```{r}
+GRLaV3_vs_Nb[,1] <- NULL
+```
+
+Nb expression: Replicates and normalisation
+========================================================
+
+Set the replicate relationship.. columns 1 and 2 are reps of each other
+```{r}
+replicate_relationship <- factor(c(1,1,2))
+```
+Construct the DGEList object
+```{r}
+de_genes <- DGEList(counts=GRLaV3_vs_Nb,group=replicate_relationship,)
+```
+Calculate normalisation factors
+```{r}
+de_genes <- calcNormFactors(de_genes)
+```
+Examine normalisation factors as a sanity check
+```{r}
+de_genes$samples
+```
+We can see that Benth.Healthy2 had a lot less sequencing.
+
+Nb expression: Filtering
+========================================================
+Nonsensical results can happen if we do not remove genes that are not biologically relevant because of low expression. Filter out low expressed genes on the basis of the count per million. This filters out genes that are less than `cpmlimit`, and that are not expressed in `libexplimit` number of libraries.
+```{r}
+cpmlimit <- 10
+libexplimit <- 3
+keep <- rowSums(cpm(de_genes)>cpmlimit) >= libexplimit
+```
+How many genes were kept?
+```{r}
+sum(keep)
+```
+Calculate normalisation factors again and view them
+```{r}
+de_genes_kept <- de_genes[keep, , keep.lib.sizes=FALSE]
+de_genes_kept <- calcNormFactors(de_genes_kept)
+de_genes_kept$samples
+```
+
+Nb expression: Experimental design
+========================================================
+
+Set experiment design
+```{r}
+design <- model.matrix(~replicate_relationship)
+```
+
+Estimate dispersion
+```{r}
+de_genes_kept <- estimateDisp(de_genes_kept,design)
+```
+
+Nb expression: Test for differential expression I
+========================================================
+
+Now we test for differential expression using two methods.
+Use the **likelihood ratio test** to test for differentially expressed genes
+
+From the edgeR manual:
+>"edgeR offers many variants on analyses. The glm approach is more popular than the classic
+>approach as it offers great flexibilities. There are two testing methods under the glm framework:
+>likelihood ratio test and quasi-likelihood F-test. The quasi-likelihood method is highly
+>recommended for differential expression analyses of bulk RNA-seq data as it gives stricter
+>error rate control by accounting for the uncertainty in dispersion estimation. The likelihood
+>ratio test can be useful in some special cases such as single cell RNA-seq and datasets with
+>no replicates."
+
+Use the glm to obtain DE genes
+```{r}
+fitglm <- glmFit(de_genes_kept,design)
+lrtglm <- glmLRT(fitglm,coef=2)
+topTags(lrtglm, n=10)
+```
+
+Nb expression: Test for differential expression II
+========================================================
+
+Use the **quasi-likelihood model** to obtain differentially expressed genes.
+From edgeR manual: 
+>"While the likelihood ratio test is a more obvious choice for inferences with GLMs, the QL
+>F-test is preferred as it reflects the uncertainty in estimating the dispersion for each gene. It
+>provides more robust and reliable error rate control when the number of replicates is small"
+
+```{r}
+fitqlm <- glmQLFit(de_genes_kept, design)
+qlftest <- glmQLFTest(fitqlm, coef=2)
+topTags(qlftest, n=10)
+```
